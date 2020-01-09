@@ -474,7 +474,8 @@ class Line(Element):
                 error_table[f"k{o}sl"][i_line]
                 for o in range(max_multipole_err + 1)
             ]
-            self.add_multipole_error_to(element, knl, ksl)
+            if any(knl) or any(ksl):
+                self.add_multipole_error_to(element, knl, ksl)
 
         return elements_not_found
 
