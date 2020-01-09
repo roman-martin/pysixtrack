@@ -343,7 +343,7 @@ class Line(Element):
 
     # error handling (alignment, multipole orders, ...):
 
-    def find_element_ids(self, element):
+    def find_element_ids(self, element_name):
         """Find element in this Line instance's self.elements.
 
         Return index before and after the element, taking into account
@@ -353,34 +353,31 @@ class Line(Element):
         Raises IndexError if element not in this Line.
         """
         # will raise error if element not present:
-        idx_el = self.elements.index(element)
+        idx_el = self.element_names.index(element_name)
         idx_after_el = idx_el + 1
-        el_name = self.element_names[idx_el]
-        if self.element_names[idx_after_el] == el_name + "_aperture":
+        if self.element_names[idx_after_el] == element_name + "_aperture":
             idx_after_el += 1
         return idx_el, idx_after_el
 
-    def add_offset_error_to(self, element, dx=0, dy=0):
-        idx_el, idx_after_el = self.find_element_ids(element)
-        el_name = self.element_names[idx_el]
+    def add_offset_error_to(self, element_name, dx=0, dy=0):
+        idx_el, idx_after_el = self.find_element_ids(element_name)
         if not dx and not dy:
             return
         xyshift = elements.XYShift(dx=dx, dy=dy)
         inv_xyshift = elements.XYShift(dx=-dx, dy=-dy)
-        self.insert_element(idx_el, xyshift, el_name + "_offset_in")
+        self.insert_element(idx_el, xyshift, element_name + "_offset_in")
         self.insert_element(
-            idx_after_el + 1, inv_xyshift, el_name + "_offset_out"
+            idx_after_el + 1, inv_xyshift, element_name + "_offset_out"
         )
 
-    def add_tilt_error_to(self, element, angle):
-        idx_el, idx_after_el = self.find_element_ids(element)
-        el_name = self.element_names[idx_el]
+    def add_tilt_error_to(self, element_name, angle):
+        idx_el, idx_after_el = self.find_element_ids(element_name)
         if not angle:
             return
         srot = elements.SRotation(angle=angle)
         inv_srot = elements.SRotation(angle=-angle)
-        self.insert_element(idx_el, srot, el_name + "_tilt_in")
-        self.insert_element(idx_after_el + 1, inv_srot, el_name + "_tilt_out")
+        self.insert_element(idx_el, srot, element_name + "_tilt_in")
+        self.insert_element(idx_after_el + 1, inv_srot, element_name + "_tilt_out")
 
     def add_multipole_error_to(self, element, knl=[], ksl=[]):
         # will raise error if element not present:
@@ -456,12 +453,12 @@ class Line(Element):
                 dy = error_table["dy"][i_line]
             except KeyError:
                 dy = 0
-            self.add_offset_error_to(element, dx, dy)
+            self.add_offset_error_to(element_name, dx, dy)
 
             # add tilt
             try:
                 dpsi = error_table["dpsi"][i_line]
-                self.add_tilt_error_to(element, angle=dpsi * 180 / np.pi)
+                self.add_tilt_error_to(element_name, angle=dpsi * 180 / np.pi)
             except KeyError:
                 pass
 
