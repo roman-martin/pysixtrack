@@ -379,9 +379,10 @@ class Line(Element):
         self.insert_element(idx_el, srot, element_name + "_tilt_in")
         self.insert_element(idx_after_el + 1, inv_srot, element_name + "_tilt_out")
 
-    def add_multipole_error_to(self, element, knl=[], ksl=[]):
+    def add_multipole_error_to(self, element_name, knl=[], ksl=[]):
         # will raise error if element not present:
-        assert element in self.elements
+        assert element_name in self.element_names
+        element = self.elements[self.element_names.index(element_name)]
         # normal components
         knl = np.trim_zeros(knl, trim="b")
         if len(element.knl) < len(knl):
@@ -442,7 +443,6 @@ class Line(Element):
             if element_name not in self.element_names:
                 elements_not_found.append(element_name)
                 continue
-            element = self.elements[self.element_names.index(element_name)]
 
             # add offset
             try:
@@ -472,7 +472,7 @@ class Line(Element):
                 for o in range(max_multipole_err + 1)
             ]
             if any(knl) or any(ksl):
-                self.add_multipole_error_to(element, knl, ksl)
+                self.add_multipole_error_to(element_name, knl, ksl)
 
         return elements_not_found
 
