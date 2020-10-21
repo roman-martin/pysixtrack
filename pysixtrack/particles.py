@@ -310,8 +310,14 @@ class Particles(object):
         self._delta = delta
         deltabeta0 = delta * self.beta0
         ptaubeta0 = sqrt(deltabeta0 ** 2 + 2 * deltabeta0 * self.beta0 + 1) - 1
+        if hasattr(self,'_rvv'):
+            oldrvv = self._rvv
+        else:
+            oldrvv = None
         self._rvv = (1 + self.delta) / (1 + ptaubeta0)
         self._rpp = 1 / (1 + self.delta)
+        if oldrvv:
+            self.zeta *= self._rvv / oldrvv
 
     psigma = property(lambda self: self.ptau / self.beta0)
 
@@ -424,12 +430,15 @@ class Particles(object):
         if self._update_coordinates:
             mratio = self.mass / self.mass0
             norm = mratio * self.p0c
+            oldrvv = self._rvv
             self._mratio = mratio
             self._chi = self._qratio / mratio
             self._ptau = energy / norm - 1
             self._delta = pc / norm - 1
+            self._rvv = self.beta / self.beta0
             self.px = Px / norm
             self.py = Py / norm
+            self.zeta *= self._rvv / oldrvv
 
     def __repr__(self):
         out = f"""\
