@@ -1,3 +1,6 @@
+import os
+import io
+import csv
 import numpy as np
 
 from . import elements as pysixtrack_elements
@@ -212,8 +215,30 @@ def iter_from_madx_sequence(
                     b=ee.aperture[3],
                 )
             else:
-                raise ValueError("Aperture type not recognized")
+                # MAD-X can define have aperture > 0 while actually using a file
+                if not os.path.isfile(ee.apertype):
+                    raise ValueError("Aperture type not recognized")
 
+            yield eename + "_aperture", newaperture
+
+        elif install_apertures & os.path.isfile(ee.apertype):
+            # this was put here because the other aperture
+            # installation checks for aperture > 0
+            with open(ee.apertype, 'r') as aper_file:
+                input_file_str = ''
+                for line in aper_file:
+                    if line.strip():    # ignore empty lines
+                        input_file_str += line.replace('\t', ' ')
+                        # csv delimiter must be ' '
+            with io.StringIO(input_file_str) as file_from_str:
+                aper_reader = csv.reader(file_from_str, delimiter=' ',
+                                         skipinitialspace=True,
+                                         quoting=csv.QUOTE_NONNUMERIC)
+                # reader -> list and non-numpy transposing
+                aper_coords = list(map(list, zip(*aper_reader)))
+            newaperture = pysixtrack_elements.LimitPolygon(
+                aperture=aper_coords
+            )
             yield eename + "_aperture", newaperture
 
     if hasattr(seq, "length") and seq.length > old_pp:
